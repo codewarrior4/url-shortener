@@ -1,14 +1,13 @@
 import { IsString, IsUrl, MaxLength } from 'class-validator';
+import {
+  destinationUrlOptions,
+  MAX_DESTINATION_LENGTH,
+} from './destination-url.js';
 
 export class CreateLinkDto {
   @IsString()
-  @MaxLength(2048)
-  @IsUrl({
-    protocols: ['http', 'https'],
-    require_protocol: true,
-    require_valid_protocol: true,
-    disallow_auth: true,
-  })
+  @MaxLength(MAX_DESTINATION_LENGTH)
+  @IsUrl(destinationUrlOptions)
   destination: string;
 }
 

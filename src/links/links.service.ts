@@ -7,6 +7,11 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { QueryFailedError, Repository } from 'typeorm';
 import { paginate } from 'nestjs-paginate';
 import type { PaginateQuery, Paginated } from 'nestjs-paginate';
+import { isURL } from 'class-validator';
+import {
+  destinationUrlOptions,
+  MAX_DESTINATION_LENGTH,
+} from './destination-url.js';
 import { Link } from './link.entity.js';
 import { ShortCodeGenerator } from './short-code.generator.js';
 
@@ -20,6 +25,27 @@ export class LinksService {
     @InjectRepository(Link) private readonly links: Repository<Link>,
     private readonly codes: ShortCodeGenerator,
   ) {}
+
+  async resolve(code: string): Promise<string> {
+    if (!/^[A-Za-z0-9_-]{1,32}$/.test(code)) {
+      throw new NotFoundException('Link not found');
+    }
+
+    const link = await this.links.findOne({
+      where: { code },
+      select: { destination: true },
+    });
+
+    if (
+      !link ||
+      link.destination.length > MAX_DESTINATION_LENGTH ||
+      !isURL(link.destination, destinationUrlOptions)
+    ) {
+      throw new NotFoundException('Link not found');
+    }
+
+    return link.destination;
+  }
 
   list(userId: number, query: PaginateQuery): Promise<Paginated<Link>> {
     return paginate(query, this.links, {
