@@ -46,6 +46,7 @@
     "handlebars": "^4.7.10",
     "ioredis": "^5.11.1",
     "joi": "^18.3.1",
+    "nestjs-paginate": "^16.0.1",
     "nodemailer": "^10.3.1",
     "pg": "^8.23.1",
     "reflect-metadata": "^0.2.2",
