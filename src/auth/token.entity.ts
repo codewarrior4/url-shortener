@@ -1,6 +1,7 @@
 import { User } from './user.entity.js';
 import { AuthSession } from './session.entity.js';
 import {
+  Check,
   Entity,
   PrimaryGeneratedColumn,
   Column,
@@ -9,6 +10,7 @@ import {
   JoinColumn,
 } from 'typeorm';
 @Entity('auth_tokens')
+@Check('auth_tokens_purpose_check', "purpose IN ('verify', 'reset', 'refresh')")
 export class AuthToken {
   @PrimaryGeneratedColumn('identity') id: number;
   @Index('auth_tokens_userId_idx') @Column({ type: 'int' }) userId: number;
