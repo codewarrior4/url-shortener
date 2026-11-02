@@ -1,3 +1,8 @@
+import { EventEmitterModule } from '@nestjs/event-emitter';
+import { APP_GUARD, APP_PIPE } from '@nestjs/core';
+import { ValidationPipe } from '@nestjs/common';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { AuthModule } from './auth/auth.module.js';
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -8,6 +13,9 @@ import { AppService } from './app.service.js';
 
 @Module({
   imports: [
+    EventEmitterModule.forRoot(),
+    AuthModule,
+    ThrottlerModule.forRoot([{ ttl: 60000, limit: 10 }]),
     ConfigModule.forRoot({
       isGlobal: true,
       validationSchema: environmentSchema,
@@ -22,6 +30,19 @@ import { AppService } from './app.service.js';
     }),
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    ThrottlerGuard,
+    {
+      provide: APP_PIPE,
+      useFactory: () =>
+        new ValidationPipe({
+          whitelist: true,
+          forbidNonWhitelisted: true,
+          transform: true,
+        }),
+    },
+    { provide: APP_GUARD, useExisting: ThrottlerGuard },
+  ],
 })
 export class AppModule {}

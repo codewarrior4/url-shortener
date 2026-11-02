@@ -14,9 +14,26 @@ jobs:
     env:
       NODE_ENV: test
       PORT: '3000'
+      JWT_SECRET: ci-only-secret-at-least-32-characters-long
+      APP_URL: http://localhost:3000
+      SMTP_HOST: sandbox.smtp.mailtrap.io
+      SMTP_USER: test
+      SMTP_PASSWORD: test
+      MAIL_FROM: auth@example.com
+      REDIS_URL: redis://127.0.0.1:6379/1
+      NOTIFICATION_ENCRYPTION_KEY: '1111111111111111111111111111111111111111111111111111111111111111'
       # Credentials belong only to this disposable CI service.
       DATABASE_URL: postgresql://test_user:test_password@localhost:5432/url_shortener_test
     services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
       postgres:
         image: postgres:17
         env:
@@ -39,6 +56,10 @@ jobs:
       - run: npm ci
       - name: Build application
         run: npm run build
+      - name: Type-check application and tests
+        run: npm run test:types
+      - name: Lint
+        run: npm run lint
       - name: Unit tests
         run: npm test
       - name: Apply test database migrations
