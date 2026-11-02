@@ -1,0 +1,47 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      NODE_ENV: test
+      PORT: '3000'
+      # Credentials belong only to this disposable CI service.
+      DATABASE_URL: postgresql://test_user:test_password@localhost:5432/url_shortener_test
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: test_user
+          POSTGRES_PASSWORD: test_password
+          POSTGRES_DB: url_shortener_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U test_user -d url_shortener_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - name: Build application
+        run: npm run build
+      - name: Unit tests
+        run: npm test
+      - name: Apply test database migrations
+        run: npm run migration:run
+      - name: API tests
+        run: npm run test:e2e
