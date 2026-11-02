@@ -2,7 +2,15 @@ import { environmentSchema } from './environment.schema.js';
 
 describe('environmentSchema', () => {
   const validEnvironment = {
-    DATABASE_URL: 'postgresql://test_user:test_password@localhost:5432/url_shortener_test',
+    NOTIFICATION_ENCRYPTION_KEY: '1'.repeat(64),
+    JWT_SECRET: 'unit-tests-only-secret-at-least-32-characters',
+    APP_URL: 'http://localhost:3000',
+    SMTP_HOST: 'sandbox.smtp.mailtrap.io',
+    SMTP_USER: 'test',
+    SMTP_PASSWORD: 'test',
+    MAIL_FROM: 'auth@example.com',
+    DATABASE_URL:
+      'postgresql://test_user:test_password@localhost:5432/url_shortener_test',
   };
 
   it('provides development and port defaults', () => {
@@ -27,6 +35,7 @@ describe('environmentSchema', () => {
 
   it.each(['postgres', 'postgresql'])('accepts the %s scheme', (scheme) => {
     const { error } = environmentSchema.validate({
+      ...validEnvironment,
       DATABASE_URL: `${scheme}://user:password@localhost:5432/shortener`,
     });
 

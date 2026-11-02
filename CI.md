@@ -2,11 +2,11 @@
 
 GitHub Actions runs `.github/workflows/ci.yml` on pushes and pull requests:
 
-1. Start a disposable PostgreSQL 17 service and wait for readiness.
+1. Start disposable PostgreSQL 17 and Redis 7 services and wait for readiness.
 2. Set up Node 24 and install dependencies from the committed lockfile with `npm ci`.
 3. Build the application and run unit tests.
 4. Apply compiled migrations to `url_shortener_test`.
-5. Run API tests against that database.
+5. Run API tests against that database and notification integration tests against Redis.
 
 Any failed step fails the job. Commit `package-lock.json` alongside dependency changes.
 The service credentials in the workflow are temporary test credentials, not deployment secrets.
@@ -27,7 +27,7 @@ npm run test:e2e
 
 API tests use `.env.test` or an explicitly supplied DATABASE_URL, never an implicit
 fallback to `.env`. Existing environment variables take precedence over files.
-Unit schema tests do not need PostgreSQL.
+Unit tests do not need PostgreSQL or Redis. API tests need both. Test setup uses a process-specific Redis queue prefix and the Redis test database (index 1). Notification integration tests remove their own jobs and accounts; SMTP is replaced with a test double.
 
 This sets up CI only. Deployment automation will be added after choosing a hosting
 target. No production migrations or deployment happen in this workflow.

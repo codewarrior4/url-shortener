@@ -1,14 +1,15 @@
-import { fileURLToPath } from 'node:url';
+import { User } from '../auth/user.entity.js';
+import { AuthSession } from '../auth/session.entity.js';
+import { AuthToken } from '../auth/token.entity.js';
+import { Auth1793600000000 } from './migrations/1793600000000-Auth.js';
 import type { DataSourceOptions } from 'typeorm';
 
 export function databaseOptions(url: string): DataSourceOptions {
-  const extension = import.meta.url.endsWith('.ts') ? 'ts' : 'js';
-
   return {
     type: 'postgres',
     url,
-    entities: [fileURLToPath(new URL(`../**/*.entity.${extension}`, import.meta.url))],
-    migrations: [fileURLToPath(new URL(`./migrations/*.${extension}`, import.meta.url))],
+    entities: [User, AuthSession, AuthToken],
+    migrations: [Auth1793600000000],
     synchronize: false,
     migrationsRun: false,
     connectTimeoutMS: 5000,
