@@ -118,10 +118,10 @@ A user can register, log in, create a short link, follow it publicly and manage 
 
 ### Tests throughout Day 2
 
-- [ ] Valid custom aliases work; duplicate aliases return a conflict.
-- [ ] Invalid or reserved aliases are rejected.
-- [ ] Owner destination edits work; unauthorized edits fail.
-- [ ] Expired, disabled and deleted links cannot redirect.
+- [x] Valid custom aliases work; duplicate aliases return a conflict.
+- [x] Invalid or reserved aliases are rejected.
+- [x] Owner destination edits work; unauthorized edits fail.
+- [x] Expired, disabled and deleted links cannot redirect.
 - [ ] Refresh-token rotation issues a replacement and invalidates the consumed token.
 - [ ] Invalid and expired refresh tokens are rejected.
 - [ ] Logout revokes the refresh session; existing access-token expiry behaviour is documented.

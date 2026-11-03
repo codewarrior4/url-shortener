@@ -35,6 +35,8 @@ export class LinksController {
       userId: link.userId,
       destination: link.destination,
       code: link.code,
+      expiresAt: link.expiresAt,
+      isEnabled: link.isEnabled,
       shortUrl: new URL(
         `/${link.code}`,
         this.config.getOrThrow<string>('APP_URL'),
@@ -48,7 +50,7 @@ export class LinksController {
   @Header('Cache-Control', 'no-store')
   async create(@Req() request: AuthRequest, @Body() dto: CreateLinkDto) {
     return this.present(
-      await this.links.create(request.auth.userId, dto.destination),
+      await this.links.create(request.auth.userId, dto.destination, dto),
     );
   }
 
@@ -70,9 +72,7 @@ export class LinksController {
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateLinkDto,
   ) {
-    return this.present(
-      await this.links.update(request.auth.userId, id, dto.destination),
-    );
+    return this.present(await this.links.update(request.auth.userId, id, dto));
   }
 
   @Delete(':id')
