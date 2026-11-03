@@ -6,7 +6,7 @@ import {
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { QueryFailedError, Repository } from 'typeorm';
+import { IsNull, QueryFailedError, Repository } from 'typeorm';
 import { paginate } from 'nestjs-paginate';
 import type { PaginateQuery, Paginated } from 'nestjs-paginate';
 import { isURL } from 'class-validator';
@@ -53,7 +53,7 @@ export class LinksService {
     }
 
     const link = await this.links.findOne({
-      where: { code, isEnabled: true },
+      where: { code, isEnabled: true, adminDisabledAt: IsNull() },
       select: { destination: true, expiresAt: true },
     });
 
@@ -77,6 +77,30 @@ export class LinksService {
       defaultLimit: 20,
       maxLimit: 100,
     });
+  }
+
+  async disableForModeration(id: number): Promise<Link> {
+    const result = await this.links
+      .createQueryBuilder()
+      .update(Link)
+      .set({ adminDisabledAt: new Date() })
+      .where({ id })
+      .returning('*')
+      .execute();
+    if (!result.affected) throw new NotFoundException('Link not found');
+    return this.links.create(result.raw[0] as Link);
+  }
+
+  async enableForModeration(id: number): Promise<Link> {
+    const result = await this.links
+      .createQueryBuilder()
+      .update(Link)
+      .set({ adminDisabledAt: null })
+      .where({ id })
+      .returning('*')
+      .execute();
+    if (!result.affected) throw new NotFoundException('Link not found');
+    return this.links.create(result.raw[0] as Link);
   }
 
   async update(

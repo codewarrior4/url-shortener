@@ -261,13 +261,20 @@ export class AuthService {
           audience: 'url-shortener-api',
         },
       );
-      const session = await this.db.getRepository(AuthSession).findOneBy({
-        id: payload.sid,
-        userId: Number(payload.sub),
-        revokedAt: IsNull(),
+      const session = await this.db.getRepository(AuthSession).findOne({
+        where: {
+          id: payload.sid,
+          userId: Number(payload.sub),
+          revokedAt: IsNull(),
+        },
+        relations: { user: true },
       });
       if (!session || session.expiresAt <= new Date()) throw new Error();
-      return { userId: session.userId, sessionId: session.id };
+      return {
+        userId: session.userId,
+        sessionId: session.id,
+        role: session.user.role,
+      };
     } catch {
       throw new UnauthorizedException();
     }
@@ -315,6 +322,11 @@ export class AuthService {
     const user = await this.db
       .getRepository(User)
       .findOneByOrFail({ id: userId });
-    return { id: user.id, email: user.email, verifiedAt: user.verifiedAt };
+    return {
+      id: user.id,
+      email: user.email,
+      role: user.role,
+      verifiedAt: user.verifiedAt,
+    };
   }
 }

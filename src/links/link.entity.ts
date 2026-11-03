@@ -35,6 +35,9 @@ export class Link {
   @Column({ type: 'boolean', default: true })
   isEnabled: boolean;
 
+  @Column({ type: 'timestamptz', nullable: true })
+  adminDisabledAt: Date | null;
+
   @CreateDateColumn({ type: 'timestamptz' })
   createdAt: Date;
 

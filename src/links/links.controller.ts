@@ -37,6 +37,7 @@ export class LinksController {
       code: link.code,
       expiresAt: link.expiresAt,
       isEnabled: link.isEnabled,
+      adminDisabledAt: link.adminDisabledAt,
       shortUrl: new URL(
         `/${link.code}`,
         this.config.getOrThrow<string>('APP_URL'),
