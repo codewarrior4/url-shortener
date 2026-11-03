@@ -127,8 +127,8 @@ A user can register, log in, create a short link, follow it publicly and manage 
 - [x] Logout revokes the refresh session; existing access-token expiry behaviour is documented.
 - [x] Admin moderation enforces roles and disables redirects for moderated links.
 - [x] Rate limits return the expected response.
-- [ ] Request IDs appear on successful and failed responses.
-- [ ] Error handling and timing instrumentation preserve redirect status and headers.
+- [x] Request IDs appear on successful and failed responses.
+- [x] Error handling and timing instrumentation preserve redirect status and headers.
 - [ ] Missing or invalid required environment configuration prevents startup.
 - [ ] Health checks report dependency failures appropriately.
 - [ ] CI uses an isolated test database and runs migrations before database/API tests.

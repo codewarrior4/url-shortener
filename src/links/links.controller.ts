@@ -20,6 +20,7 @@ import type { AuthRequest } from '../auth/auth.guard.js';
 import { Link } from './link.entity.js';
 import { CreateLinkDto, UpdateLinkDto } from './link.dto.js';
 import { LinksService } from './links.service.js';
+import { DestinationUrlPipe } from './destination-url.pipe.js';
 
 @Controller('links')
 @UseGuards(AuthGuard)
@@ -49,7 +50,10 @@ export class LinksController {
 
   @Post()
   @Header('Cache-Control', 'no-store')
-  async create(@Req() request: AuthRequest, @Body() dto: CreateLinkDto) {
+  async create(
+    @Req() request: AuthRequest,
+    @Body(DestinationUrlPipe) dto: CreateLinkDto,
+  ) {
     return this.present(
       await this.links.create(request.auth.userId, dto.destination, dto),
     );
@@ -71,7 +75,7 @@ export class LinksController {
   async update(
     @Req() request: AuthRequest,
     @Param('id', ParseIntPipe) id: number,
-    @Body() dto: UpdateLinkDto,
+    @Body(DestinationUrlPipe) dto: UpdateLinkDto,
   ) {
     return this.present(await this.links.update(request.auth.userId, id, dto));
   }

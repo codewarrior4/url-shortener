@@ -1,5 +1,9 @@
 import { EventEmitterModule } from '@nestjs/event-emitter';
-import { APP_GUARD, APP_PIPE } from '@nestjs/core';
+import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
+import type { MiddlewareConsumer, NestModule } from '@nestjs/common';
+import { RequestIdMiddleware } from './common/http/request-id.middleware.js';
+import { TimingInterceptor } from './common/http/timing.interceptor.js';
+import { HttpExceptionFilter } from './common/http/http-exception.filter.js';
 import { ValidationPipe } from '@nestjs/common';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { AuthModule } from './auth/auth.module.js';
@@ -35,6 +39,8 @@ import { AppService } from './app.service.js';
   providers: [
     AppService,
     ThrottlerGuard,
+    { provide: APP_INTERCEPTOR, useClass: TimingInterceptor },
+    { provide: APP_FILTER, useClass: HttpExceptionFilter },
     {
       provide: APP_PIPE,
       useFactory: () =>
@@ -47,4 +53,8 @@ import { AppService } from './app.service.js';
     { provide: APP_GUARD, useExisting: ThrottlerGuard },
   ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer): void {
+    consumer.apply(RequestIdMiddleware).forRoutes('{*path}');
+  }
+}

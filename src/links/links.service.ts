@@ -9,11 +9,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { IsNull, QueryFailedError, Repository } from 'typeorm';
 import { paginate } from 'nestjs-paginate';
 import type { PaginateQuery, Paginated } from 'nestjs-paginate';
-import { isURL } from 'class-validator';
-import {
-  destinationUrlOptions,
-  MAX_DESTINATION_LENGTH,
-} from './destination-url.js';
+import { isSafeDestination } from './destination-url.js';
 import { Link } from './link.entity.js';
 import { ShortCodeGenerator } from './short-code.generator.js';
 import { ALIAS_PATTERN, isReservedAlias } from './alias-policy.js';
@@ -60,8 +56,7 @@ export class LinksService {
     if (
       !link ||
       (link.expiresAt !== null && link.expiresAt.getTime() <= Date.now()) ||
-      link.destination.length > MAX_DESTINATION_LENGTH ||
-      !isURL(link.destination, destinationUrlOptions)
+      !isSafeDestination(link.destination)
     ) {
       throw new NotFoundException('Link not found');
     }
