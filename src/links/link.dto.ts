@@ -2,16 +2,12 @@ import {
   IsBoolean,
   IsISO8601,
   IsString,
-  IsUrl,
   Matches,
   MaxLength,
   ValidateIf,
 } from 'class-validator';
 import { ALIAS_PATTERN } from './alias-policy.js';
-import {
-  destinationUrlOptions,
-  MAX_DESTINATION_LENGTH,
-} from './destination-url.js';
+import { MAX_DESTINATION_LENGTH } from './destination-url.js';
 
 class LinkLifecycleDto {
   @ValidateIf((_object, value) => value !== undefined && value !== null)
@@ -29,7 +25,6 @@ class LinkLifecycleDto {
 export class CreateLinkDto extends LinkLifecycleDto {
   @IsString()
   @MaxLength(MAX_DESTINATION_LENGTH)
-  @IsUrl(destinationUrlOptions)
   destination: string;
 
   @ValidateIf((_object, value) => value !== undefined)
@@ -44,6 +39,5 @@ export class UpdateLinkDto extends LinkLifecycleDto {
   @ValidateIf((_object, value) => value !== undefined)
   @IsString()
   @MaxLength(MAX_DESTINATION_LENGTH)
-  @IsUrl(destinationUrlOptions)
   destination?: string;
 }
