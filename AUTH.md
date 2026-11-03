@@ -111,6 +111,37 @@ GitHub Actions builds, checks types, lints, runs unit tests, migrates a disposab
 - TypeORM transaction callbacks and pessimistic locks correspond to `DB::transaction` and `lockForUpdate`.
 - AuthSession is a revocable session family; AuthToken stores one-time credentials and rotation history.
 
-## Remaining work
+## Admin authorization and moderation
+
+New users receive the `user` role. Registration rejects a supplied `role` field.
+`AuthGuard` loads the current role from PostgreSQL with the session, so promotion
+or demotion takes effect on the next authorization check, even with an existing JWT.
+`@Roles(UserRole.Admin)` and `RolesGuard` are reusable role requirements, similar
+to Laravel authorization middleware/Gates. Owner-scoped link queries remain a
+separate ownership rule.
+
+After registering and verifying an account, an operator with local environment
+and database access can explicitly promote it:
+
+```bash
+npm run admin:role -- existing-email@example.com admin
+```
+
+Demotion uses the same command with `user`. This command uses `.env`, TypeORM's
+repository API and the configured database. It is not exposed through HTTP, does
+not create accounts, and has not been run on any local account automatically.
+
+Admins can call `PATCH /admin/links/:id/disable` with a bearer access token.
+Anonymous requests return 401; non-admin users return 403; unknown links return 404.
+The endpoint sets `adminDisabledAt`, independently of the owner's `isEnabled`.
+Owners cannot clear this field through their update DTO, and their edits or
+re-enabling do not restore public redirects. The current scope provides disabling,
+not an admin restore endpoint.
+
+Login, link creation and public redirects have tested 429 responses under excessive
+requests. Rate limiting still uses in-memory per-IP/per-route counters; it is not
+shared across multiple application instances.
+
+## Remaining production work
 
 URL shortener features are not implemented by this auth change. Next come links, ownership and redirects. Production follow-ups include a transactional outbox, distributed and account-aware rate limiting, retention/cleanup of expired token records, operational monitoring and deployment configuration. Do not delete consumed refresh tokens while their session is active, because reuse detection depends on them.

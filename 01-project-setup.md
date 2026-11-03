@@ -118,15 +118,15 @@ A user can register, log in, create a short link, follow it publicly and manage 
 
 ### Tests throughout Day 2
 
-- [ ] Valid custom aliases work; duplicate aliases return a conflict.
-- [ ] Invalid or reserved aliases are rejected.
-- [ ] Owner destination edits work; unauthorized edits fail.
-- [ ] Expired, disabled and deleted links cannot redirect.
-- [ ] Refresh-token rotation issues a replacement and invalidates the consumed token.
-- [ ] Invalid and expired refresh tokens are rejected.
-- [ ] Logout revokes the refresh session; existing access-token expiry behaviour is documented.
-- [ ] Admin moderation enforces roles and disables redirects for moderated links.
-- [ ] Rate limits return the expected response.
+- [x] Valid custom aliases work; duplicate aliases return a conflict.
+- [x] Invalid or reserved aliases are rejected.
+- [x] Owner destination edits work; unauthorized edits fail.
+- [x] Expired, disabled and deleted links cannot redirect.
+- [x] Refresh-token rotation issues a replacement and invalidates the consumed token.
+- [x] Invalid and expired refresh tokens are rejected.
+- [x] Logout revokes the refresh session; existing access-token expiry behaviour is documented.
+- [x] Admin moderation enforces roles and disables redirects for moderated links.
+- [x] Rate limits return the expected response.
 - [ ] Request IDs appear on successful and failed responses.
 - [ ] Error handling and timing instrumentation preserve redirect status and headers.
 - [ ] Missing or invalid required environment configuration prevents startup.

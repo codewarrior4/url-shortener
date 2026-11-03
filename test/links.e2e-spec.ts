@@ -230,4 +230,164 @@ describe('Links API', () => {
       codes.mockRestore();
     }
   });
+
+  it('creates a custom alias, redirects publicly, and returns 409 for a duplicate', async () => {
+    const alias = `alias-${randomUUID().slice(0, 8)}`;
+    const body = { destination: 'https://example.com/custom', alias };
+    const result = await request(app.getHttpServer())
+      .post('/links')
+      .auth(accessToken, { type: 'bearer' })
+      .send(body)
+      .expect(201);
+    expect(result.body).toMatchObject({
+      code: alias,
+      expiresAt: null,
+      isEnabled: true,
+    });
+    expect(new URL(result.body.shortUrl).pathname).toBe(`/${alias}`);
+    await request(app.getHttpServer())
+      .get(`/${alias}`)
+      .expect(302)
+      .expect('Location', body.destination);
+    await request(app.getHttpServer())
+      .post('/links')
+      .auth(otherToken, { type: 'bearer' })
+      .send(body)
+      .expect(409);
+  });
+
+  it.each([
+    'ab',
+    'bad alias',
+    'bad.alias',
+    'x'.repeat(33),
+    'links',
+    'AUTH',
+    'verify-email',
+    'reset-password',
+    'health',
+    'admin',
+    null,
+  ])('rejects invalid or reserved alias %s', async (alias) => {
+    await request(app.getHttpServer())
+      .post('/links')
+      .auth(accessToken, { type: 'bearer' })
+      .send({ destination: 'https://example.com', alias })
+      .expect(400);
+  });
+
+  it('disables and re-enables a link without releasing its alias', async () => {
+    const alias = `toggle-${randomUUID().slice(0, 8)}`;
+    const created = await request(app.getHttpServer())
+      .post('/links')
+      .auth(accessToken, { type: 'bearer' })
+      .send({ destination: 'https://example.com', alias, isEnabled: false })
+      .expect(201);
+    await request(app.getHttpServer()).get(`/${alias}`).expect(404);
+    await request(app.getHttpServer())
+      .post('/links')
+      .auth(otherToken, { type: 'bearer' })
+      .send({ destination: 'https://example.com', alias })
+      .expect(409);
+    await request(app.getHttpServer())
+      .patch(`/links/${created.body.id}`)
+      .auth(accessToken, { type: 'bearer' })
+      .send({ isEnabled: true })
+      .expect(200);
+    await request(app.getHttpServer()).get(`/${alias}`).expect(302);
+    await request(app.getHttpServer())
+      .patch(`/links/${created.body.id}`)
+      .auth(accessToken, { type: 'bearer' })
+      .send({ isEnabled: false })
+      .expect(200);
+    await request(app.getHttpServer()).get(`/${alias}`).expect(404);
+    const listing = await request(app.getHttpServer())
+      .get('/links')
+      .auth(accessToken, { type: 'bearer' })
+      .expect(200);
+    expect(listing.body.data[0].isEnabled).toBe(false);
+  });
+
+  it('stops redirecting at expiry and lets the owner clear expiration', async () => {
+    const expiresAt = new Date(Date.now() + 60000).toISOString();
+    const created = await request(app.getHttpServer())
+      .post('/links')
+      .auth(accessToken, { type: 'bearer' })
+      .send({ destination: 'https://example.com', expiresAt })
+      .expect(201);
+    expect(created.body.expiresAt).toBe(expiresAt);
+    await request(app.getHttpServer()).get(`/${created.body.code}`).expect(302);
+    const now = vi
+      .spyOn(Date, 'now')
+      .mockReturnValue(new Date(expiresAt).getTime());
+    try {
+      await request(app.getHttpServer())
+        .get(`/${created.body.code}`)
+        .expect(404);
+    } finally {
+      now.mockRestore();
+    }
+    await db
+      .getRepository(Link)
+      .update(created.body.id, { expiresAt: new Date(0) });
+    await request(app.getHttpServer()).get(`/${created.body.code}`).expect(404);
+    const cleared = await request(app.getHttpServer())
+      .patch(`/links/${created.body.id}`)
+      .auth(accessToken, { type: 'bearer' })
+      .send({ expiresAt: null })
+      .expect(200);
+    expect(cleared.body.expiresAt).toBeNull();
+    await request(app.getHttpServer()).get(`/${created.body.code}`).expect(302);
+  });
+
+  it('allows owner-only lifecycle edits while keeping the alias and destination stable', async () => {
+    const link = (await createLink()).body;
+    const expiresAt = new Date(Date.now() + 3600000).toISOString();
+    await request(app.getHttpServer())
+      .patch(`/links/${link.id}`)
+      .auth(otherToken, { type: 'bearer' })
+      .send({ isEnabled: false, expiresAt })
+      .expect(404);
+    const result = await request(app.getHttpServer())
+      .patch(`/links/${link.id}`)
+      .auth(accessToken, { type: 'bearer' })
+      .send({ expiresAt })
+      .expect(200);
+    expect(result.body).toMatchObject({
+      code: link.code,
+      destination: link.destination,
+      isEnabled: true,
+      expiresAt,
+    });
+    await request(app.getHttpServer())
+      .patch(`/links/${link.id}`)
+      .auth(accessToken, { type: 'bearer' })
+      .send({ alias: 'cannot-change' })
+      .expect(400);
+  });
+
+  it.each([
+    { expiresAt: 'yesterday' },
+    { expiresAt: '2020-01-01T00:00:00Z' },
+    { expiresAt: '2099-01-01T00:00:00' },
+    { expiresAt: '2099-02-30T00:00:00Z' },
+    { isEnabled: 'false' },
+    { isEnabled: null },
+    { destination: null },
+  ])(
+    'rejects invalid lifecycle values %j on create and update',
+    async (changes) => {
+      const link = (await createLink()).body;
+      await request(app.getHttpServer())
+        .post('/links')
+        .auth(accessToken, { type: 'bearer' })
+        .send({ destination: 'https://example.com', ...changes })
+        .expect(400);
+      await request(app.getHttpServer())
+        .patch(`/links/${link.id}`)
+        .auth(accessToken, { type: 'bearer' })
+        .send(changes)
+        .expect(400);
+    },
+  );
 });
