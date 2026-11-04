@@ -8,6 +8,7 @@ import { ValidationPipe } from '@nestjs/common';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { AuthModule } from './auth/auth.module.js';
 import { LinksModule } from './links/links.module.js';
+import { HealthModule } from './health/health.module.js';
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -21,6 +22,7 @@ import { AppService } from './app.service.js';
     EventEmitterModule.forRoot(),
     AuthModule,
     LinksModule,
+    HealthModule,
     ThrottlerModule.forRoot([{ ttl: 60000, limit: 10 }]),
     ConfigModule.forRoot({
       isGlobal: true,

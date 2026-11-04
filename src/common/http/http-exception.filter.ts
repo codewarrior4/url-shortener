@@ -27,7 +27,11 @@ export class HttpExceptionFilter implements ExceptionFilter {
       else message = STATUS_CODES[statusCode] ?? 'Request failed';
       // Nest's Express adapter maps JSON SyntaxErrors to BadRequestException
       // without retaining their cause. Never echo parser diagnostics/body text.
-      if (statusCode === 400 && request.is('application/json') && request.body === undefined) {
+      if (
+        statusCode === 400 &&
+        request.is('application/json') &&
+        request.body === undefined
+      ) {
         message = 'Malformed JSON body';
       }
       if (statusCode === 413) message = 'Request body too large';

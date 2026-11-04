@@ -66,3 +66,23 @@ jobs:
         run: npm run migration:run
       - name: API tests
         run: npm run test:e2e
+
+  container:
+    name: Container acceptance
+    needs: test
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+      - name: Create isolated container settings
+        run: node scripts/setup-docker-env.mjs --ci
+      - name: Build image, migrate and start local services
+        run: npm run docker:up
+      - name: Container acceptance test
+        run: npm run docker:smoke
+      - name: Stop local services
+        if: always()
+        run: npm run docker:down
